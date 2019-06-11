@@ -116,7 +116,6 @@ class ModelBuilder(ModelBuilderBase):
         while poi:
             self.out.var(poi.GetName()).setAttribute('group_POI',True)
             poi = poiIter.Next()
-
         self.physics.preProcessNuisances(self.DC.systs)
         self.doNuisances()
 	self.doExtArgs()
@@ -173,17 +172,19 @@ class ModelBuilder(ModelBuilderBase):
 	        param_range = self.DC.extArgs[rp][-1]
 	        param_val   = self.DC.extArgs[rp][-2]
 	    	if "[" not in param_range:
-			  raise RuntimeError, "Expected range arguments [min,max] for extArg %s "%(rp)
+			  raise RuntimeError, "Expected range arguments [min,max] or [const] for extArg %s "%(rp)
 	  	param_range = param_range.strip('[]')
 
 	      removeRange = False
-	      if param_range == "":
-	      	param_range = "0,1"
+	      setConst= (param_range== "const")
+	      if param_range in ["", "const"]:
+	        param_range = "0,1"
 		removeRange=True
 
 	      self.doVar("%s[%s,%s]"%(rp,float(param_val),param_range))
 	      if removeRange: self.out.var(rp).removeRange()
 	      self.out.var(rp).setConstant(False)
+	      if setConst: self.out.var(rp).setConstant(True)
 	      self.out.var(rp).setAttribute("flatParam")
 
     def doRateParams(self):
@@ -203,14 +204,14 @@ class ModelBuilder(ModelBuilderBase):
 	        wstmp = open_files[(fin,wsn)]
 	        if not wstmp.arg(argu):
 	         raise RuntimeError, "No parameter '%s' found for rateParam in workspace %s from file %s"%(argu,wsn,fin)
-	        self.out._import(wstmp.arg(argu))
+	        self.out._import(wstmp.arg(argu),ROOT.RooFit.RecycleConflictNodes())
 	  else:
 	    try:
 	      fitmp = ROOT.TFile.Open(fin)
 	      wstmp = fitmp.Get(wsn)
 	      if not wstmp.arg(argu):
 	       raise RuntimeError, "No parameter '%s' found for rateParam in workspace %s from file %s"%(argu,wsn,fin)
-	      self.out._import(wstmp.arg(argu))
+	      self.out._import(wstmp.arg(argu),ROOT.RooFit.RecycleConflictNodes())
 	      open_files[(fin,wsn)] = wstmp
 	      #fitmp.Close()
 	    except:

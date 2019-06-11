@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import re
-from sys import argv
+from sys import argv,exit
 import os.path
 from pprint import pprint
 from optparse import OptionParser
@@ -63,12 +63,12 @@ for ich,fname in enumerate(args):
         for (p,e) in DC.exp[b].items(): # so that we get only self.DC.processes contributing to this bin
             if DC.isSignal[p] == False: continue
             #print "in DC.exp.items:b,p", b,p
-            expline.append("%s" % FloatToString(e)) if (e == 0 or e > 1e-3) else expline.append("%s" % FloatToStringScientific(e,'e'))
+            expline.append("%s" % FloatToString(e)) if (e == 0 or e > 1e-3) else expline.append("%s" % FloatToStringScientific(e))
             keyline.append((bout, p, DC.isSignal[p]))
         for (p,e) in DC.exp[b].items(): # so that we get only self.DC.processes contributing to this bin
             if DC.isSignal[p]: continue
             #print "in DC.exp.items:b,p", b,p
-            expline.append("%s" % FloatToString(e)) if (e == 0 or e > 1e-3) else expline.append("%s" % FloatToStringScientific(e,'e'))
+            expline.append("%s" % FloatToString(e)) if (e == 0 or e > 1e-3) else expline.append("%s" % FloatToStringScientific(e))
             keyline.append((bout, p, DC.isSignal[p]))
     # systematics
     for (lsyst,nofloat,pdf,pdfargs,errline) in DC.systs:
@@ -182,9 +182,9 @@ for ich,fname in enumerate(args):
 
         tmp_chan = editline[2]
         tmp_proc = editline[1]
-
         if tmp_chan == "*": # all channels
           tmp_chan = "%s(%s)"%(label,"|".join(c for c in DC.bins)) if len (DC.bins)>1 else label
+	else: tmp_chan = label+tmp_chan
         if tmp_proc == "*":
           tmp_proc = "(%s)"%("|".join(p for p in DC.processes))
         nuisanceEdits.append("%s %s %s %s"%(editline[0],tmp_proc,tmp_chan," ".join(editline[3])))

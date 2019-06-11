@@ -55,6 +55,11 @@ protected:
   static bool  saveFitResult_;
   static std::string fixedPointPOIs_;
   static float centeredRange_;
+  static std::string setParametersForGrid_;
+
+  static bool robustHesse_;
+  static std::string robustHesseLoad_;
+  static std::string robustHesseSave_;
 
   static std::string saveSpecifiedFuncs_;
   static std::string saveSpecifiedNuis_;

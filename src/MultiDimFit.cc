@@ -17,6 +17,7 @@
 #include "HiggsAnalysis/CombinedLimit/interface/CascadeMinimizer.h"
 #include "HiggsAnalysis/CombinedLimit/interface/CloseCoutSentry.h"
 #include "HiggsAnalysis/CombinedLimit/interface/utils.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RobustHesse.h"
 
 #include <Math/Minimizer.h>
 #include <Math/MinimizerOptions.h>
@@ -51,11 +52,15 @@ float MultiDimFit::maxDeltaNLLForProf_ = 200;
 float MultiDimFit::autoRange_ = -1.0;
 std::string MultiDimFit::fixedPointPOIs_ = "";
 float MultiDimFit::centeredRange_ = -1.0;
+bool        MultiDimFit::robustHesse_ = false;
+std::string MultiDimFit::robustHesseLoad_ = "";
+std::string MultiDimFit::robustHesseSave_ = "";
 
 
 std::string MultiDimFit::saveSpecifiedFuncs_;
 std::string MultiDimFit::saveSpecifiedIndex_;
 std::string MultiDimFit::saveSpecifiedNuis_;
+std::string MultiDimFit::setParametersForGrid_;
 std::vector<std::string>  MultiDimFit::specifiedFuncNames_;
 std::vector<RooAbsReal*> MultiDimFit::specifiedFunc_;
 std::vector<float>        MultiDimFit::specifiedFuncVals_;
@@ -93,7 +98,11 @@ MultiDimFit::MultiDimFit() :
 	("saveInactivePOI",   boost::program_options::value<bool>(&saveInactivePOI_)->default_value(saveInactivePOI_), "Save inactive POIs in output (1) or not (0, default)")
 	("startFromPreFit",   boost::program_options::value<bool>(&startFromPreFit_)->default_value(startFromPreFit_), "Start each point of the likelihood scan from the pre-fit values")
     ("alignEdges",   boost::program_options::value<bool>(&alignEdges_)->default_value(alignEdges_), "Align the grid points such that the endpoints of the ranges are included")
+    ("setParametersForGrid", boost::program_options::value<std::string>(&setParametersForGrid_)->default_value(""), "Set the values of relevant physics model parameters. Give a comma separated list of parameter value assignments. Example: CV=1.0,CF=1.0")
 	("saveFitResult",  "Save RooFitResult to muiltidimfit.root")
+    ("robustHesse",  boost::program_options::value<bool>(&robustHesse_)->default_value(robustHesse_),  "Use a more robust calculation of the hessian/covariance matrix")
+    ("robustHesseLoad",  boost::program_options::value<std::string>(&robustHesseLoad_)->default_value(robustHesseLoad_),  "Load the pre-calculated Hessian")
+    ("robustHesseSave",  boost::program_options::value<std::string>(&robustHesseSave_)->default_value(robustHesseSave_),  "Save the calculated Hessian")
       ;
 }
 
@@ -128,7 +137,7 @@ void MultiDimFit::applyOptions(const boost::program_options::variables_map &vm)
     skipInitialFit_ = (vm.count("skipInitialFit") > 0);
     hasMaxDeltaNLLForProf_ = !vm["maxDeltaNLLForProf"].defaulted();
     loadedSnapshot_ = !vm["snapshotName"].defaulted();
-    savingSnapshot_ = (!loadedSnapshot_) && vm.count("saveWorkspace");
+    savingSnapshot_ = vm.count("saveWorkspace");
     name_ = vm["name"].defaulted() ?  std::string() : vm["name"].as<std::string>();
     saveFitResult_ = (vm.count("saveFitResult") > 0);
 }
@@ -167,7 +176,7 @@ bool MultiDimFit::runSpecific(RooWorkspace *w, RooStats::ModelConfig *mc_s, RooS
     if (verbose <= 3) RooAbsReal::setEvalErrorLoggingMode(RooAbsReal::CountErrors);
     bool doHesse = (algo_ == Singles || algo_ == Impact) || (saveFitResult_) ;
     if ( !skipInitialFit_){
-        res.reset(doFit(pdf, data, (doHesse ? poiList_ : RooArgList()), constrainCmdArg, false, 1, true, false));
+        res.reset(doFit(pdf, data, (doHesse ? poiList_ : RooArgList()), constrainCmdArg, (saveFitResult_ && !robustHesse_), 1, true, false));
         if (!res.get()) {
             std::cout << "\n " <<std::endl;
             std::cout << "\n ---------------------------" <<std::endl;
@@ -213,6 +222,23 @@ bool MultiDimFit::runSpecific(RooWorkspace *w, RooStats::ModelConfig *mc_s, RooS
 	Combine::commitPoint(/*expected=*/false, /*quantile=*/-1.); // Combine will not commit a point anymore at -1 so can do it here 
 	//}
     }
+
+    if (robustHesse_) {
+        RobustHesse robustHesse(*nll, verbose - 1);
+        robustHesse.ProtectArgSet(*mc_s->GetParametersOfInterest());
+        if (robustHesseSave_ != "") {
+          robustHesse.SaveHessianToFile(robustHesseSave_);
+        }
+        if (robustHesseLoad_ != "") {
+          robustHesse.LoadHessianFromFile(robustHesseLoad_);
+        }
+        robustHesse.hesse();
+        if (saveFitResult_) {
+            res.reset(robustHesse.GetRooFitResult(res.get()));
+        }
+        robustHesse.WriteOutputFile("robustHesse"+name_+".root");
+    }
+
    
     //set snapshot for best fit
     if (savingSnapshot_) w->saveSnapshot("MultiDimFit",utils::returnAllVars(w));
@@ -343,7 +369,15 @@ void MultiDimFit::initOnce(RooWorkspace *w, RooStats::ModelConfig *mc_s) {
 		    strlcpy(tmp,saveSpecifiedNuis_.c_str(),10240) ;
 		    char* token = strtok(tmp,",") ;
 		    while(token) {
-			    specifiedNuis_.push_back(token);
+			    const RooArgSet* group = mc_s->GetWS()->set((std::string("group_") + token).data());
+			    if (group){
+				    RooLinkedListIter iterN = group->iterator();
+				    for (RooAbsArg *a = (RooAbsArg*) iterN.Next(); a != 0; a = (RooAbsArg*) iterN.Next()) {
+					    specifiedNuis_.push_back(a->GetName());
+				    }
+			    }else{
+				    specifiedNuis_.push_back(token);
+			    }
 			    token = strtok(0,",") ; 
 		    }
 	    }
@@ -406,18 +440,35 @@ void MultiDimFit::doSingles(RooFitResult &res)
         double hiErr = +(rf->hasRange("err68") ? rf->getMax("err68") - bestFitVal : rf->getAsymErrorHi());
         double loErr = -(rf->hasRange("err68") ? rf->getMin("err68") - bestFitVal : rf->getAsymErrorLo());
         double maxError = std::max<double>(std::max<double>(hiErr, loErr), rf->getError());
-
-        if (fabs(hiErr) < 0.001*maxError) hiErr = -bestFitVal + rf->getMax();
-        if (fabs(loErr) < 0.001*maxError) loErr = +bestFitVal - rf->getMin();
+        if (fabs(hiErr) < 0.001*maxError){ 
+		std::cout << " Warning - No valid high-error found, will report difference to maximum of range for : " << rf->GetName() << std::endl;
+		hiErr = -bestFitVal + rf->getMax();
+	}
+        if (fabs(loErr) < 0.001*maxError) {
+		std::cout << " Warning - No valid low-error found, will report difference to minimum of range for : " << rf->GetName() << std::endl;
+		loErr = +bestFitVal - rf->getMin();
+	}
+        
+	poiVals_[i] = bestFitVal - loErr; Combine::commitPoint(true, /*quantile=*/-0.32);
+        poiVals_[i] = bestFitVal + hiErr; Combine::commitPoint(true, /*quantile=*/0.32);
 
         double hiErr95 = +(do95_ && rf->hasRange("err95") ? rf->getMax("err95") - bestFitVal : 0);
         double loErr95 = -(do95_ && rf->hasRange("err95") ? rf->getMin("err95") - bestFitVal : 0);
+        double maxError95 = std::max<double>(std::max<double>(hiErr95, loErr95), 2*rf->getError());
 
-        poiVals_[i] = bestFitVal - loErr; Combine::commitPoint(true, /*quantile=*/0.32);
-        poiVals_[i] = bestFitVal + hiErr; Combine::commitPoint(true, /*quantile=*/0.32);
         if (do95_ && rf->hasRange("err95")) {
-            poiVals_[i] = rf->getMax("err95"); Combine::commitPoint(true, /*quantile=*/0.05);
-            poiVals_[i] = rf->getMin("err95"); Combine::commitPoint(true, /*quantile=*/0.05);
+            if (fabs(hiErr95) < 0.001*maxError95){ 
+		std::cout << " Warning - No valid high-error (for 95%) found, will report difference to maximum of range for : " << rf->GetName() << std::endl;
+		hiErr95 = -bestFitVal + rf->getMax();
+	    }
+            if (fabs(loErr95) < 0.001*maxError95) {
+		std::cout << " Warning - No valid low-error (for 95%) found, will report difference to minimum of range for : " << rf->GetName() << std::endl;
+		loErr95 = +bestFitVal - rf->getMin();
+	    }
+	    poiVals_[i] = bestFitVal - loErr95; Combine::commitPoint(true, /*quantile=*/-0.05);
+            poiVals_[i] = bestFitVal + hiErr95; Combine::commitPoint(true, /*quantile=*/0.05);
+            //poiVals_[i] = rf->getMax("err95"); Combine::commitPoint(true, /*quantile=*/-0.05);
+            //poiVals_[i] = rf->getMin("err95"); Combine::commitPoint(true, /*quantile=*/0.05);
             poiVals_[i] = bestFitVal;
             printf("   %*s :  %+8.3f   %+6.3f/%+6.3f (68%%)    %+6.3f/%+6.3f (95%%) \n", len, poi_[i].c_str(), 
                     poiVals_[i], -loErr, hiErr, loErr95, -hiErr95);
@@ -520,6 +571,13 @@ void MultiDimFit::doGrid(RooWorkspace *w, RooAbsReal &nll)
     unsigned int n = poi_.size();
     //if (poi_.size() > 2) throw std::logic_error("Don't know how to do a grid with more than 2 POIs.");
     double nll0 = nll.getVal();
+
+    if (setParametersForGrid_ != "") {
+       RooArgSet allParams(w->allVars());
+       allParams.add(w->allCats());
+       utils::setModelParameters( setParametersForGrid_, allParams);
+    }
+
     if (startFromPreFit_) w->loadSnapshot("clean");
 
     std::vector<double> p0(n), pmin(n), pmax(n);
@@ -924,7 +982,7 @@ void MultiDimFit::doFixedPoint(RooWorkspace *w, RooAbsReal &nll)
     //for (unsigned int i = 0; i < n; ++i) {
     //        std::cout<<" after the fit "<<poiVars_[i]->GetName()<<"= "<<poiVars_[i]->getVal()<<std::endl;
     //}
-	    }
+        }
     } 
 }
 

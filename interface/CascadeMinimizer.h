@@ -10,6 +10,8 @@ class RooRealVar;
 //#include "HiggsAnalysis/CombinedLimit/interface/RooMinimizerOpt.h"
 #include "RooMinimizer.h"
 #include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
+
 
 class CascadeMinimizer {
     public:
@@ -34,7 +36,8 @@ class CascadeMinimizer {
         static const boost::program_options::options_description & options() { return options_; }
         void trivialMinimize(const RooAbsReal &nll, RooRealVar &r, int points=100) const ;
         //void collectIrrelevantNuisances(RooAbsCollection &irrelevant) const ;
-        void setAutoBounds(const RooArgSet *pois) ; 
+	bool freezeDiscParams(const bool);
+        void setAutoBounds(const RooArgSet *pois) ;
         void setAutoMax(const RooArgSet *pois) ; 
 	double tolerance() {return defaultMinimizerTolerance_;};
 	std::string algo() {return defaultMinimizerAlgo_;};
@@ -60,10 +63,10 @@ class CascadeMinimizer {
         static boost::program_options::options_description options_;
         /// compact information about an algorithm
         struct Algo { 
-            Algo() : algo(), tolerance(), strategy(-1) {}
-            Algo(const std::string &str, float tol=-1.f, int strategy=-1) : algo(str), tolerance(tol), strategy(strategy) {}
-            std::string algo; float tolerance; int strategy;
-            static float default_tolerance() { return -1.f; }
+            Algo() : type(), algo(), tolerance(), strategy(-1) {}
+            Algo(const std::string &tystr, const std::string &str, float tol=-1.f, int strategy=-1) :type(tystr), algo(str), tolerance(tol), strategy(strategy) {}
+            std::string type; std::string algo; float tolerance; int strategy;
+            static float default_tolerance() { return 0.1; }
             static int   default_strategy() { return -1; }
         };
         /// list of algorithms to run if the default one fails
@@ -96,6 +99,7 @@ class CascadeMinimizer {
 	static std::string defaultMinimizerType_;
 	static std::string defaultMinimizerAlgo_;
 	static double 	   defaultMinimizerTolerance_;
+	static double 	   defaultMinimizerPrecision_;
 	//static int 	   defaultMinimizerStrategy_;
 
     	static bool runShortCombinations; 
@@ -118,8 +122,11 @@ class CascadeMinimizerGlobalConfigs{
 	  //RooCategory* x;
 	  RooListProxy pdfCategories; 
 	  RooListProxy nuisanceParameters; 
+	  RooListProxy allFloatingParameters; 
 	  RooListProxy parametersOfInterest; 
- 
+	  RooListProxy allRooMultiPdfParams;
+	  RooListProxy allRooMultiPdfs;
+
 	  static CascadeMinimizerGlobalConfigs& O(){
 
 		static CascadeMinimizerGlobalConfigs singleton;

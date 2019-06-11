@@ -34,6 +34,7 @@ double CascadeMinimizer::discreteMinTol_ = 0.001;
 std::string CascadeMinimizer::defaultMinimizerType_="Minuit2"; // default to minuit2 (not always the default !?)
 std::string CascadeMinimizer::defaultMinimizerAlgo_=ROOT::Math::MinimizerOptions::DefaultMinimizerAlgo();
 double CascadeMinimizer::defaultMinimizerTolerance_=1e-1;  
+double CascadeMinimizer::defaultMinimizerPrecision_=-1.0;
 int  CascadeMinimizer::strategy_=1; 
 
 std::map<std::string,std::vector<std::string> > const CascadeMinimizer::minimizerAlgoMap_{
@@ -56,6 +57,16 @@ CascadeMinimizer::CascadeMinimizer(RooAbsReal &nll, Mode mode, RooRealVar *poi) 
 {
 }
 
+bool CascadeMinimizer::freezeDiscParams(const bool freeze)
+{
+    if (runtimedef::get(std::string("MINIMIZER_freezeDiscretes"))) {
+      bool ret =  utils::freezeAllDisassociatedRooMultiPdfParameters((CascadeMinimizerGlobalConfigs::O().allRooMultiPdfs),(CascadeMinimizerGlobalConfigs::O().allRooMultiPdfParams),freeze);
+      return ret;
+    } else {
+      return false;
+    }
+}
+
 void CascadeMinimizer::setAutoBounds(const RooArgSet *pois) 
 {
     poisForAutoBounds_ = pois;
@@ -72,7 +83,7 @@ void CascadeMinimizer::setAutoMax(const RooArgSet *pois)
 bool CascadeMinimizer::improve(int verbose, bool cascade) 
 {
     cacheutils::CachingSimNLL *simnllbb = dynamic_cast<cacheutils::CachingSimNLL *>(&nll_);
-    if (simnllbb && runtimedef::get("MINIMIZER_analytic")) {
+    if (simnllbb && runtimedef::get(std::string("MINIMIZER_analytic"))) {
       simnllbb->setAnalyticBarlowBeeston(true);
       minimizer_.reset(new RooMinimizer(nll_));
     }
@@ -84,6 +95,7 @@ bool CascadeMinimizer::improve(int verbose, bool cascade)
     std::string nominalType(ROOT::Math::MinimizerOptions::DefaultMinimizerType());
     std::string nominalAlgo(ROOT::Math::MinimizerOptions::DefaultMinimizerAlgo());
     float       nominalTol(ROOT::Math::MinimizerOptions::DefaultTolerance());
+    minimizer_->setEps(nominalTol);
     if (approxPreFitTolerance_ > 0) {
       double tol = std::max(approxPreFitTolerance_, 10. * nominalTol);
       do {
@@ -106,7 +118,7 @@ bool CascadeMinimizer::improve(int verbose, bool cascade)
 		Logger::instance().log(std::string(Form("CascadeMinimizer.cc: %d -- Failed minimization with %s, %s and tolerance %g",__LINE__,nominalType.c_str(),nominalAlgo.c_str(),nominalTol)),Logger::kLogLevelDebug,__func__);
 	}
         for (std::vector<Algo>::const_iterator it = fallbacks_.begin(), ed = fallbacks_.end(); it != ed; ++it) {
-            Significance::MinimizerSentry minimizerConfig(it->algo, it->tolerance != Algo::default_tolerance() ? it->tolerance : nominalTol); // set the global defaults
+            Significance::MinimizerSentry minimizerConfig(it->type + "," + it->algo, it->tolerance != Algo::default_tolerance() ? it->tolerance : nominalTol); // set the global defaults
             int myStrategy = it->strategy; if (myStrategy == Algo::default_strategy()) myStrategy = nominalStrat;
             if (nominalType != ROOT::Math::MinimizerOptions::DefaultMinimizerType() ||
                 nominalAlgo != ROOT::Math::MinimizerOptions::DefaultMinimizerAlgo() ||
@@ -126,7 +138,7 @@ bool CascadeMinimizer::improve(int verbose, bool cascade)
       }
     } while (autoBounds_ && !autoBoundsOk(verbose-1));
 
-    if (simnllbb && runtimedef::get("MINIMIZER_analytic")) {
+    if (simnllbb && runtimedef::get(std::string("MINIMIZER_analytic"))) {
       simnllbb->setAnalyticBarlowBeeston(false);
       // minimizer_.reset(new RooMinimizerOpt(nll_));
     }
@@ -190,7 +202,7 @@ bool CascadeMinimizer::improveOnce(int verbose, bool noHesse)
 bool CascadeMinimizer::minos(const RooArgSet & params , int verbose ) {
    
    cacheutils::CachingSimNLL *simnllbb = dynamic_cast<cacheutils::CachingSimNLL *>(&nll_);
-   if (simnllbb && runtimedef::get("MINIMIZER_analytic")) {
+   if (simnllbb && runtimedef::get(std::string("MINIMIZER_analytic"))) {
       // if one of the barlow-beeston params is in "params", we don't actually
       // want to freeze it here. Trick is to set all floating ones constant now,
       // then call setAnalyticBarlowBeeston, which will initiate bb only for the
@@ -226,7 +238,7 @@ bool CascadeMinimizer::minos(const RooArgSet & params , int verbose ) {
       if (simnll) simnll->clearZeroPoint();
    }
 
-   if (simnllbb && runtimedef::get("MINIMIZER_analytic")) {
+   if (simnllbb && runtimedef::get(std::string("MINIMIZER_analytic"))) {
      simnllbb->setAnalyticBarlowBeeston(false);
      // minimizer_.reset(new RooMinimizerOpt(nll_));
    }
@@ -237,7 +249,7 @@ bool CascadeMinimizer::minos(const RooArgSet & params , int verbose ) {
 bool CascadeMinimizer::hesse(int verbose ) {
    
    cacheutils::CachingSimNLL *simnllbb = dynamic_cast<cacheutils::CachingSimNLL *>(&nll_);
-   if (simnllbb && runtimedef::get("MINIMIZER_analytic")) {
+   if (simnllbb && runtimedef::get(std::string("MINIMIZER_analytic"))) {
       // Have to reset and minimize again first to get all parameters in
       minimizer_.reset(new RooMinimizer(nll_));
       float       nominalTol(ROOT::Math::MinimizerOptions::DefaultTolerance());
@@ -268,18 +280,34 @@ bool CascadeMinimizer::hesse(int verbose ) {
 
 bool CascadeMinimizer::iterativeMinimize(double &minimumNLL,int verbose, bool cascade){
 
-/* 
-If there are discrete parameters, first we cycle through them, 
-fixing all parameters which do not depend on them 
+   /* 
+   If there are discrete parameters, first we cycle through them, 
+   fixing all parameters which do not depend on them 
 
-step 1, the set which is passed contains all of the parameters which 
-are freely floating. We should cut them down to find which ones are
+   step 1, the set which is passed contains all of the parameters which 
+   are freely floating. We should cut them down to find which ones are
+   */
 
-*/
    // Do A reasonable fit if something changed before 
-   if ( fabs(minimumNLL - nll_.getVal()) > discreteMinTol_ ) improve(verbose,cascade);
+   
+   // First freeze all parameters that have nothing to do with the current active pdfs*
+   freezeDiscParams(true);
 
-   RooArgSet nuisances = CascadeMinimizerGlobalConfigs::O().nuisanceParameters;
+   //std::cout << " Staring in iterativeMinimize and the minimum NLL so far is  " << minimumNLL << std::endl; 
+   if ( fabs(minimumNLL - nll_.getVal()) > discreteMinTol_ ) { 
+     
+     minimizer_.reset(new RooMinimizer(nll_));
+     cacheutils::CachingSimNLL *simnll = setZeroPoint_ ? dynamic_cast<cacheutils::CachingSimNLL *>(&nll_) : 0;
+     if (simnll) simnll->setZeroPoint();
+
+     improve(verbose,cascade);
+     //std::cout << " Had to improve further since tolerance is not yet reached   " << nll_.getVal() << std::endl; 
+   }
+
+   // Next remove the POIs and constrained nuisances - this is to set up for the fast loop over the Index combinations
+   RooArgSet nuisances = CascadeMinimizerGlobalConfigs::O().allFloatingParameters;
+   nuisances.remove(CascadeMinimizerGlobalConfigs::O().allRooMultiPdfParams);
+
    RooArgSet poi = CascadeMinimizerGlobalConfigs::O().parametersOfInterest;
    RooArgSet frozen;
 
@@ -310,13 +338,17 @@ are freely floating. We should cut them down to find which ones are
    if (simnll) simnll->clearZeroPoint();
 
    utils::setAllConstant(frozen,false);
-
-   //if (discretesHaveChanged) { 
+   
    // Run one last fully floating fit to maintain RooFitResult
    minimizer_.reset(new RooMinimizer(nll_));
-   improve(verbose, cascade); 
+   ret = improve(verbose, cascade); 
    //}
    minimumNLL = nll_.getVal();
+   //std::cout << " At the end of iterativeMinimizer, minimum NLL is now " << minimumNLL << std::endl; 
+
+   // unfreeze from *
+   freezeDiscParams(false);
+
    return ret;
 }
 
@@ -331,20 +363,22 @@ bool CascadeMinimizer::minimize(int verbose, bool cascade)
     }
 
     bool doMultipleMini = (CascadeMinimizerGlobalConfigs::O().pdfCategories.getSize()>0);
-    if ( doMultipleMini ) preFit_ = 1;
+    // if ( doMultipleMini ) preFit_ = 1;
 
     minimizer_->setPrintLevel(verbose-2);  
     minimizer_->setStrategy(strategy_);
-    if (preScan_) minimizer_->minimize("Minuit2","Scan");
-
-    
+    //if (preScan_) minimizer_->minimize("Minuit2","Scan");
+ 
     //if (preFit_ && nuisances != 0) {
     
     RooArgSet nuisances = CascadeMinimizerGlobalConfigs::O().nuisanceParameters;
+
+    
     if (preFit_ ) {
         RooArgSet frozen(nuisances);
         RooStats::RemoveConstantParameters(&frozen);
         utils::setAllConstant(frozen,true);
+        freezeDiscParams(true);
 
         minimizer_.reset(new RooMinimizer(nll_));
         minimizer_->setPrintLevel(verbose-2);
@@ -356,8 +390,10 @@ bool CascadeMinimizer::minimize(int verbose, bool cascade)
         minimizer_->minimize(ROOT::Math::MinimizerOptions::DefaultMinimizerType().c_str(), ROOT::Math::MinimizerOptions::DefaultMinimizerAlgo().c_str());
         if (simnll) simnll->clearZeroPoint();
         utils::setAllConstant(frozen,false);
+        freezeDiscParams(false);
         minimizer_.reset(new RooMinimizer(nll_));
     }
+    
      // FIXME can be made smarter than this
     /*
     if (mode_ == Unconstrained && poiOnlyFit_) {
@@ -402,15 +438,18 @@ bool CascadeMinimizer::minimize(int verbose, bool cascade)
       if (runShortCombinations) {
         // Initial fit under current index values
         improve(verbose, cascade);
-        double minimumNLL  = 10+nll_.getVal();
+        double backupApproxPreFitTolerance = approxPreFitTolerance_;
+        approxPreFitTolerance_ = 0.;
+
+        double minimumNLL  = nll_.getVal();
         double previousNLL = nll_.getVal();
         int maxIterations = 15; int iterationCounter=0;
         for (;iterationCounter<maxIterations;iterationCounter++){
-          iterativeMinimize(minimumNLL,verbose,cascade);
+          ret = iterativeMinimize(minimumNLL,verbose,cascade);
           if ( fabs(previousNLL-minimumNLL) < discreteMinTol_ ) break; // should be minimizer tolerance
           previousNLL = minimumNLL ;
         }
-
+        approxPreFitTolerance_ = backupApproxPreFitTolerance;
       } else {
 
         double minimumNLL = 10+nll_.getVal();
@@ -451,6 +490,16 @@ bool CascadeMinimizer::multipleMinimize(const RooArgSet &reallyCleanParameters, 
 	       Remove functions which cause increase in NLL > 10 (except best fit ones from previous mode)
      Mode 2 -- Full scan over the remaining combinations after mode 1
     */
+
+    //std::cout << " At the start of the looping over the Indeces, minimum NLL is " << minimumNLL << std::endl; 
+    // If the barlow-beeston minimisation is being used we can disable it temporarily,
+    // saves time if we don't have to call enable/disable on the CMSHistErrorPropagators
+    // repeatedly for no purpose
+    int currentBarlowBeeston = runtimedef::get(std::string("MINIMIZER_analytic"));
+    runtimedef::set("MINIMIZER_analytic", 0);
+    
+    double backupStrategy = ROOT::Math::MinimizerOptions::DefaultStrategy();
+    ROOT::Math::MinimizerOptions::SetDefaultStrategy(0);
 
     bool newDiscreteMinimum = false;
 
@@ -552,6 +601,16 @@ bool CascadeMinimizer::multipleMinimize(const RooArgSet &reallyCleanParameters, 
 
       if (fitCounter>0) params->assignValueOnly(reallyCleanParameters); // no need to reset from 0'th fit
 
+
+      bool resetNeeded = freezeDiscParams(true);
+
+      // frozen some parameters so need to reset the minimizer
+      if (resetNeeded){
+        minimizer_.reset(new RooMinimizer(nll_));
+        cacheutils::CachingSimNLL *simnll = setZeroPoint_ ? dynamic_cast<cacheutils::CachingSimNLL *>(&nll_) : 0;
+        if (simnll) simnll->setZeroPoint();
+      }
+
       // FIXME can be made smarter than this
       if (mode_ == Unconstrained && poiOnlyFit_) {
         trivialMinimize(nll_, *poi_, 200);
@@ -559,12 +618,16 @@ bool CascadeMinimizer::multipleMinimize(const RooArgSet &reallyCleanParameters, 
 
       ret =  improve(verbose, cascade);
 
+      freezeDiscParams(false);
+
       fitCounter++;
       double thisNllValue = nll_.getVal();
+      //std::cout << " After constrained fit, NLL is " << thisNllValue << std::endl; 
       
       if ( thisNllValue < minimumNLL ){
 		// Now we insert the correction ! 
 	        minimumNLL = thisNllValue;	
+                //std::cout << " .... Found a better fit! hoorah! " << minimumNLL << std::endl; 
     		snap.assignValueOnly(*params);
 		// set the best indeces again
 		for (int id=0;id<numIndeces;id++) {
@@ -609,6 +672,10 @@ bool CascadeMinimizer::multipleMinimize(const RooArgSet &reallyCleanParameters, 
 	((RooCategory*)(pdfCategoryIndeces.at(id)))->setIndex(bestIndeces[id]);	
     } 
     params->assignValueOnly(snap);
+    //std::cout << " After iterations, minimum NLL is " << minimumNLL << std::endl; 
+
+    runtimedef::set("MINIMIZER_analytic", currentBarlowBeeston);
+    ROOT::Math::MinimizerOptions::SetDefaultStrategy(backupStrategy);
     return newDiscreteMinimum;
 }
 
@@ -617,7 +684,7 @@ void CascadeMinimizer::initOptions()
     options_.add_options()
         ("cminPoiOnlyFit",  "Do first a fit floating only the parameter of interest")
         ("cminPreScan",  "Do a scan before first minimization")
-        ("cminPreFit", boost::program_options::value<int>(&preFit_)->default_value(preFit_), "if set to a value N > 0, it will perform a pre-fit with strategy (N-1) with frozen nuisance parameters.")
+        ("cminPreFit", boost::program_options::value<int>(&preFit_)->default_value(preFit_), "if set to a value N > 0, it will perform a pre-fit with strategy (N-1) with frozen constrained nuisance parameters.")
         ("cminApproxPreFitTolerance", boost::program_options::value<double>(&approxPreFitTolerance_)->default_value(approxPreFitTolerance_), "If non-zero, do first a pre-fit with this tolerance (or 10 times the final tolerance, whichever is largest)")
         ("cminApproxPreFitStrategy", boost::program_options::value<int>(&approxPreFitStrategy_)->default_value(approxPreFitStrategy_), "Strategy to use in the pre-fit")
         ("cminSingleNuisFit", "Do first a minimization of each nuisance parameter individually")
@@ -629,6 +696,7 @@ void CascadeMinimizer::initOptions()
 	("cminDefaultMinimizerType",boost::program_options::value<std::string>(&defaultMinimizerType_)->default_value(defaultMinimizerType_), "Set the default minimizer Type")
 	("cminDefaultMinimizerAlgo",boost::program_options::value<std::string>(&defaultMinimizerAlgo_)->default_value(defaultMinimizerAlgo_), "Set the default minimizer Algo")
 	("cminDefaultMinimizerTolerance",boost::program_options::value<double>(&defaultMinimizerTolerance_)->default_value(defaultMinimizerTolerance_), "Set the default minimizer Tolerance")
+	("cminDefaultMinimizerPrecision",boost::program_options::value<double>(&defaultMinimizerPrecision_)->default_value(defaultMinimizerPrecision_), "Set the default minimizer precision")
 	("cminDefaultMinimizerStrategy",boost::program_options::value<int>(&strategy_)->default_value(strategy_), "Set the default minimizer (initial) strategy")
         ("cminRunAllDiscreteCombinations",  "Run all combinations for discrete nuisances")
         ("cminDiscreteMinTol", boost::program_options::value<double>(&discreteMinTol_)->default_value(discreteMinTol_), "tolerance on min NLL for discrete combination iterations")
@@ -682,35 +750,48 @@ void CascadeMinimizer::applyOptions(const boost::program_options::variables_map 
         vector<string> falls(vm["cminFallbackAlgo"].as<vector<string> >());
         for (vector<string>::const_iterator it = falls.begin(), ed = falls.end(); it != ed; ++it) {
             std::string algo = *it;
+	    std::string type; 
             float tolerance = Algo::default_tolerance(); 
             int   strategy = Algo::default_strategy(); 
             string::size_type idx = std::min(algo.find(";"), algo.find(":"));
             if (idx != string::npos && idx < algo.length()) {
                  tolerance = atof(algo.substr(idx+1).c_str());
                  algo      = algo.substr(0,idx); // DON'T SWAP THESE TWO LINES
+		 type	   = std::string(defaultMinimizerType_);
             }
             idx = algo.find(",");
             if (idx != string::npos && idx < algo.length()) {
                 // if after the comma there's a number, then it's a strategy
                 if ( '0' <= algo[idx+1] && algo[idx+1] <= '9' ) {
                     strategy = atoi(algo.substr(idx+1).c_str());
-                    algo     = algo.substr(0,idx); // DON'T SWAP THESE TWO LINES
+                    type     = algo.substr(0,idx); // DON'T SWAP THESE TWO LINES
+		    std::map<std::string,std::vector<std::string> >::const_iterator ft = minimizerAlgoMap_.find(type);
+		    if (ft!=minimizerAlgoMap_.end()){
+		      algo     = (ft->second)[0];
+		    } else algo = std::string(defaultMinimizerAlgo_);
+		    
                 } else {
-                // otherwise, it could be Name,subname,strategy
-                    idx = algo.find(",",idx+1);
-                    if (idx != string::npos && idx < algo.length()) {
-                        strategy = atoi(algo.substr(idx+1).c_str());
-                        algo     = algo.substr(0,idx); // DON'T SWAP THESE TWO LINES
-                    }
+                    // otherwise, it could be Name,subname,strategy
+		    std::vector<std::string> configs;
+		    boost::algorithm::split(configs,algo,boost::is_any_of(","));
+		    if (configs.size()!=3) {
+		    	std::cerr << "The fallback command from --cminFallbackAlgo " << *it << " is malformed. It should be formatted as Type[,Algo],strategy[:tolerance] " << std::endl;
+			exit(0);
+		    }
+		    type = configs[0];
+		    algo = configs[1];
+		    strategy = atoi(configs[2].c_str());
                 }
             }
-      	    if (! checkAlgoInType(defaultMinimizerType_,algo)) {
-		std::cerr << Form("The fallback combination of minimizer type/algo %s/%s, is not recognized. Please check --cminFallbackAlgo again",defaultMinimizerType_.c_str(),algo.c_str());
+      	    if (! checkAlgoInType(type,algo)) {
+		std::cerr << Form("The fallback combination of minimizer type/algo %s/%s, is not recognized. Please check --cminFallbackAlgo again",type.c_str(),algo.c_str());
 		//Logger::instance().log(std::string(Form("CascadeMinimizer.cc: %d -- The fallback combination of minimizer type/algo %s/%s, is not recognized. Please check --cminFallbackAlgo again",__LINE__,defaultMinimizerType_.c_str(),algo.c_str())),Logger::kLogLevelError,__func__);
 		exit(0);
      	    }
-            fallbacks_.push_back(Algo(algo, tolerance, strategy));
-            std::cout << "Configured fallback algorithm " << fallbacks_.back().algo << 
+            fallbacks_.push_back(Algo(type, algo, tolerance, strategy));
+            std::cout << "Configured fallback algorithm " << 
+	    		    ", type " << fallbacks_.back().type << 
+	    		    ", algo " << fallbacks_.back().algo << 
                             ", strategy " << fallbacks_.back().strategy   << 
                             ", tolerance " << fallbacks_.back().tolerance << std::endl;
         }
@@ -722,6 +803,9 @@ void CascadeMinimizer::applyOptions(const boost::program_options::variables_map 
     // Note that the options are not applied again when recreating a CascadeMinimizer so need to set the global attributes (should we make the modifiable options persistant too?)
     ROOT::Math::MinimizerOptions::SetDefaultMinimizer(defaultMinimizerType_.c_str(),defaultMinimizerAlgo_.c_str());
     ROOT::Math::MinimizerOptions::SetDefaultTolerance(defaultMinimizerTolerance_);
+    if (defaultMinimizerPrecision_ > 0.) {
+      ROOT::Math::MinimizerOptions::SetDefaultPrecision(defaultMinimizerPrecision_);
+    }
     ROOT::Math::MinimizerOptions::SetDefaultStrategy(strategy_);
 
     //if (vm.count("cminDefaultIntegratorEpsAbs")) RooAbsReal::defaultIntegratorConfig()->setEpsAbs(vm["cminDefaultIntegratorEpsAbs"].as<double>());
