@@ -84,32 +84,11 @@
 	<class name="HZZ4L_RooSpinZeroPdf_phase_fast" />
 	<class name="VVHZZ4L_RooSpinZeroPdf_1D_fast" />
 
-	<class name="RooPiecewisePolynomial" />
-
 	<class name="RooNCSplineCore" />
 	<class name="RooNCSpline_1D_fast" />
 	<class name="RooNCSpline_2D_fast" />
 	<class name="RooNCSpline_3D_fast" />
 	<class name="RooFuncPdf" />
-
-        <class name="RooDijetFisherNom3Pdf" />
-        <class name="RooDijetFisherNom4Pdf" />
-        <class name="RooDijetFisherNom5Pdf" />
-        <class name="RooDijetFisherNom6Pdf" />
-        <class name="RooDijetFisherNom7Pdf" />
-        <class name="RooDijetFisherAlt3Pdf" />
-        <class name="RooDijetFisherAlt4Pdf" />
-        <class name="RooDijetFisherAlt5Pdf" />
-        <class name="RooDijetFisherAlt6Pdf" />
-        <class name="RooDijetFisherAlt7Pdf" />
-
-        <class name="RooModExpBinPdf" />
-        <class name="RooDijet5ParamBinPdf" />
-        <class name="RooAtlas6ParamBinPdf" />
-        <class name="RooAtlasBinPdf" />
-        <class name="RooDijet4ParamSilvioPdf" />
-        <class name="RooDijet5ParamSilvioPdf" />
-        <class name="RooDijet6ParamSilvioPdf" />
 
 	<class name="ProcessNormalization" />
 	<class name="Roo2ExpPdf" />
@@ -220,6 +199,22 @@
 	<class name="RooDijet5ParamPolyExtBinPdf" />	
 	<class name="RooDijet6ParamPolyExtBinPdf" />	
 	<class name="RooDijet7ParamPolyExtBinPdf" />	
+
+        <class name="RooDijet4ParamSilvioPdf" />
+        <class name="RooDijet5ParamSilvioPdf" />
+        <class name="RooDijet6ParamSilvioPdf" />
+
+        <class name="RooDijetFisherNom3Pdf" />
+        <class name="RooDijetFisherNom4Pdf" />
+        <class name="RooDijetFisherNom5Pdf" />
+        <class name="RooDijetFisherNom6Pdf" />
+        <class name="RooDijetFisherNom7Pdf" />
+        <class name="RooDijetFisherAlt3Pdf" />
+        <class name="RooDijetFisherAlt4Pdf" />
+        <class name="RooDijetFisherAlt5Pdf" />
+        <class name="RooDijetFisherAlt6Pdf" />
+        <class name="RooDijetFisherAlt7Pdf" />
+
 	<class name="RooModExp3ParamBinPdf" />	
 	<class name="RooModExp4ParamBinPdf" />	
 	<class name="RooModExpBinPdf" />	
@@ -234,7 +229,6 @@
   <class name="CMSHistFunc" />
   <class name="CMSHistErrorPropagator" />
   <class name="CMSHistFuncWrapper" />
-  <class name="RooTaylorExpansion" />
 	<class name="RooDoubleCBFast" />
 	<class name="CombDataSetFactory"  transient="true" />
 	<class name="DebugProposal"  transient="true" />

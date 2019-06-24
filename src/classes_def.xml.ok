@@ -103,14 +103,6 @@
         <class name="RooDijetFisherAlt6Pdf" />
         <class name="RooDijetFisherAlt7Pdf" />
 
-        <class name="RooModExpBinPdf" />
-        <class name="RooDijet5ParamBinPdf" />
-        <class name="RooAtlas6ParamBinPdf" />
-        <class name="RooAtlasBinPdf" />
-        <class name="RooDijet4ParamSilvioPdf" />
-        <class name="RooDijet5ParamSilvioPdf" />
-        <class name="RooDijet6ParamSilvioPdf" />
-
 	<class name="ProcessNormalization" />
 	<class name="Roo2ExpPdf" />
 	<class name="Roo4lMasses2D" />
@@ -214,20 +206,6 @@
 	<class name="VerticalInterpPdf" />
 	<class name="GaussExp" />
 	<class name="RooParametricHist" />
-	<class name="RooDijetBinPdf" />	
-	<class name="RooDijet5ParamBinPdf" />	
-	<class name="RooDijet6ParamBinPdf" />	
-	<class name="RooDijet5ParamPolyExtBinPdf" />	
-	<class name="RooDijet6ParamPolyExtBinPdf" />	
-	<class name="RooDijet7ParamPolyExtBinPdf" />	
-	<class name="RooModExp3ParamBinPdf" />	
-	<class name="RooModExp4ParamBinPdf" />	
-	<class name="RooModExpBinPdf" />	
-	<class name="RooModExp6ParamBinPdf" />	
-	<class name="RooAtlas4ParamBinPdf" />	
-	<class name="RooAtlasBinPdf" />	
-	<class name="RooAtlas6ParamBinPdf" />	
-	<class name="PdfDiagonalizer" />	
 	<class name="RooParametricShapeBinPdf" />
 	<class name="RooMorphingPdf" />
         <function name="function th1fmorph" />
