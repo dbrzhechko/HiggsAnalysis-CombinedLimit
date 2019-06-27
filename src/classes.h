@@ -35,8 +35,10 @@
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijetBinPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijet5ParamBinPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijet6ParamBinPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijet4ParamSilvioPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijet5ParamSilvioPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijet6ParamSilvioPdf.h"
+//#include "HiggsAnalysis/CombinedLimit/interface/RooDijet7ParamSilvioPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijet5ParamPolyExtBinPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijet6ParamPolyExtBinPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijet7ParamPolyExtBinPdf.h"
@@ -49,7 +51,18 @@
 #include "HiggsAnalysis/CombinedLimit/interface/RooAtlas6ParamBinPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/PdfDiagonalizer.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDoubleCBFast.h"
-
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherNom3Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherNom4Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherNom5Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherNom6Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherNom7Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherAlt3Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherAlt4Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherAlt5Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherNewAlt4Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherNewAlt5Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherAlt6Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherAlt7Pdf.h"
 namespace {
     struct dictionary {
 	RooBernsteinFast<1> my_RooBernsteinFast_1;
