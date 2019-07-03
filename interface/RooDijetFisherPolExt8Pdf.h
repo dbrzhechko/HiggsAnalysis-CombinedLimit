@@ -1,6 +1,6 @@
 
-#ifndef HiggsAnalysis_CombinedLimit_RooDijetFisherAlt6Pdf_h
-#define HiggsAnalysis_CombinedLimit_RooDijetFisherAlt6Pdf_h
+#ifndef HiggsAnalysis_CombinedLimit_RooDijetFisherPolExt8Pdf_h
+#define HiggsAnalysis_CombinedLimit_RooDijetFisherPolExt8Pdf_h
 //---------------------------------------------------------------------------
 #include "RooAbsPdf.h"
 #include "RooConstVar.h"
@@ -20,29 +20,29 @@ class RooAbsReal;
 #include "Math/Integrator.h"
 
 //---------------------------------------------------------------------------
-class RooDijetFisherAlt6Pdf : public RooAbsPdf
+class RooDijetFisherPolExt8Pdf : public RooAbsPdf
 {
 public:
-   RooDijetFisherAlt6Pdf() {} ;
-   RooDijetFisherAlt6Pdf(const char *name, const char *title,
+   RooDijetFisherPolExt8Pdf() {} ;
+   RooDijetFisherPolExt8Pdf(const char *name, const char *title,
         RooAbsReal& _th1x, 
         RooAbsReal& _p1,
         RooAbsReal& _p2, 
         RooAbsReal& _p3, 
         RooAbsReal& _p4, 
         RooAbsReal& _p5,
-//        RooAbsReal& _p6,
-//        RooAbsReal& _p7,
+        RooAbsReal& _p6,
+        RooAbsReal& _p7,
 //        RooAbsReal& _p8,
 //        RooAbsReal& _p9,
         RooAbsReal& _sqrts);
-   RooDijetFisherAlt6Pdf(const RooDijetFisherAlt6Pdf& other,
+   RooDijetFisherPolExt8Pdf(const RooDijetFisherPolExt8Pdf& other,
       const char* name = 0);
    void setTH1Binning(TH1* _Hnominal);
    void setAbsTol(double _absTol);
    void setRelTol(double _relTol);
-   virtual TObject* clone(const char* newname) const { return new RooDijetFisherAlt6Pdf(*this,newname); }
-   inline virtual ~RooDijetFisherAlt6Pdf() { }
+   virtual TObject* clone(const char* newname) const { return new RooDijetFisherPolExt8Pdf(*this,newname); }
+   inline virtual ~RooDijetFisherPolExt8Pdf() { }
 
    Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const;
    Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const;
@@ -55,8 +55,8 @@ protected:
    RooRealProxy p3;        // p3
    RooRealProxy p4;        // p4
    RooRealProxy p5;        // p5
-//   RooRealProxy p6;        // p6
-//   RooRealProxy p7;        // p7
+   RooRealProxy p6;        // p6
+   RooRealProxy p7;        // p7
 //   RooRealProxy p8;        // p8
 //   RooRealProxy p9;        // p9
    RooRealProxy sqrts;        // sqrts
@@ -69,7 +69,7 @@ protected:
 
    Double_t evaluate() const;
 private:
-   ClassDef(RooDijetFisherAlt6Pdf,1) // RazorDijetFisherAlt6Pdf function
+   ClassDef(RooDijetFisherPolExt8Pdf,1) // RazorDijetFisherPolExt8Pdf function
     
 };
 //---------------------------------------------------------------------------
@@ -78,7 +78,7 @@ private:
 #include "Math/IFunction.h"
 #include "Math/IParamFunction.h"
  
-class DijetFisherAlt6Function: public ROOT::Math::IParametricFunctionOneDim
+class DijetFisherPolExt8Function: public ROOT::Math::IParametricFunctionOneDim
 {
 private:
    const double *pars;
@@ -86,18 +86,18 @@ private:
 public:
    double DoEvalPar(double x,const double* p) const
    {
-     double pdf = exp(log(TMath::Max(1E-9,p[2] * x/p[0] - 1)))/pow(x/p[0],(p[1] + p[3]*log(TMath::Max(1E-9,x/p[0])) + p[4]*pow(log(TMath::Max(1E-9,x/p[0])),2) + p[5]*pow(log(TMath::Max(1E-9,x/p[0])),3))) ;
+     double pdf = (pow(1-x/p[0],p[1]))*(1+p[4]*(x/p[0])+p[5]*pow(x/p[0],2)+p[6]*pow(x/p[0],3)+p[7]*pow(x/p[0],4))/pow(x/p[0],p[2]+p[3]*log(x/p[0])) ;
      return pdf;
    }
    double DoEval(double x) const
    {
-     double pdf = exp(log(TMath::Max(1E-9,pars[2] * x/pars[0] - 1)))/pow(x/pars[0],(pars[1] + pars[3]*log(TMath::Max(1E-9,x/pars[0])) + pars[4]*pow(log(TMath::Max(1E-9,x/pars[0])),2) + pars[5]*pow(log(TMath::Max(1E-9,x/pars[0])),3))) ;
+     double pdf = (pow(1-x/pars[0],pars[1]))*(1+pars[4]*(x/pars[0])+pars[5]*pow(x/pars[0],2)+pars[6]*pow(x/pars[0],3)+pars[7]*pow(x/pars[0],4))/pow(x/pars[0],pars[2]+pars[3]*log(x/pars[0])) ;
      return pdf;
    }
  
    ROOT::Math::IBaseFunctionOneDim* Clone() const
    {
-      return new DijetFisherAlt6Function();
+      return new DijetFisherPolExt8Function();
    }
  
    const double* Parameters() const
@@ -112,6 +112,6 @@ public:
  
    unsigned int NPar() const
    {
-      return 6;
+      return 8;
    }
 };

@@ -29,6 +29,9 @@ RooDijetFisherNom5Pdf::RooDijetFisherNom5Pdf(const char *name, const char *title
                    RooAbsReal& _p4, 
 //                   RooAbsReal& _p5, 
 //                   RooAbsReal& _p6, 
+//                   RooAbsReal& _p7, 
+//                   RooAbsReal& _p8, 
+//                   RooAbsReal& _p9, 
                    RooAbsReal& _sqrts) : RooAbsPdf(name, title), 
 //TH3* _Hnominal) : RooAbsPdf(name, title), 
   th1x("th1x", "th1x Observable", this, _th1x),
@@ -38,6 +41,9 @@ RooDijetFisherNom5Pdf::RooDijetFisherNom5Pdf(const char *name, const char *title
   p4("p4", "p4", this, _p4),
 //  p5("p5", "p5", this, _p5),
 //  p6("p6", "p6", this, _p6),
+//  p7("p7", "p7", this, _p7),
+//  p8("p8", "p8", this, _p8),
+//  p9("p9", "p9", this, _p9),
   sqrts("sqrts", "sqrts", this, _sqrts),
   xBins(0),
   xMax(0),
@@ -57,6 +63,9 @@ RooDijetFisherNom5Pdf::RooDijetFisherNom5Pdf(const RooDijetFisherNom5Pdf& other,
    p4("p4", this, other.p4),
 //   p5("p5", this, other.p5),
 //   p6("p6", this, other.p6),
+//   p7("p7", this, other.p7),
+//   p8("p8", this, other.p8),
+//   p9("p9", this, other.p9),
    sqrts("sqrts", this, other.sqrts),
    xBins(other.xBins),
    xMax(other.xMax),
@@ -113,6 +122,9 @@ Double_t RooDijetFisherNom5Pdf::evaluate() const
   params[4] = p4;       
 //  params[5] = p5;
 //  params[6] = p6;
+//  params[7] = p7;
+//  params[8] = p8;
+//  params[9] = p9;
   func.SetParameters(params);
 
   ROOT::Math::Integrator ig(ROOT::Math::IntegrationOneDim::kADAPTIVE,absTol,relTol);
@@ -156,6 +168,9 @@ Double_t RooDijetFisherNom5Pdf::analyticalIntegral(Int_t code, const char* range
    params[4] = p4;       
 //   params[5] = p5;
 //   params[6] = p6;
+//   params[7] = p7;
+//   params[8] = p8;
+//   params[9] = p9;
    func.SetParameters(params);
 
    

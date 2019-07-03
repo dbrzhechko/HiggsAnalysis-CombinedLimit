@@ -32,6 +32,9 @@ public:
 //        RooAbsReal& _p4, 
 //        RooAbsReal& _p5,
 //        RooAbsReal& _p6,
+//        RooAbsReal& _p7,
+//        RooAbsReal& _p8,
+//        RooAbsReal& _p9,
         RooAbsReal& _sqrts);
    RooDijetFisherNom4Pdf(const RooDijetFisherNom4Pdf& other,
       const char* name = 0);
@@ -53,6 +56,9 @@ protected:
 //   RooRealProxy p4;        // p4
 //   RooRealProxy p5;        // p5
 //   RooRealProxy p6;        // p6
+//   RooRealProxy p7;        // p7
+//   RooRealProxy p8;        // p8
+//   RooRealProxy p9;        // p9
    RooRealProxy sqrts;        // sqrts
    Int_t xBins;        // X bins
    Double_t xArray[2000]; // xArray[xBins+1]

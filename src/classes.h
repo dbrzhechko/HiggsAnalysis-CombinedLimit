@@ -79,13 +79,34 @@
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherAlt6Pdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherAlt7Pdf.h"
 
-#include "HiggsAnalysis/CombinedLimit/interface/RooModExpBinPdf.h"
-#include "HiggsAnalysis/CombinedLimit/interface/RooDijet5ParamBinPdf.h"
-#include "HiggsAnalysis/CombinedLimit/interface/RooAtlasBinPdf.h"
-#include "HiggsAnalysis/CombinedLimit/interface/RooAtlas6ParamBinPdf.h"
+//#include "HiggsAnalysis/CombinedLimit/interface/RooModExpBinPdf.h"
+//#include "HiggsAnalysis/CombinedLimit/interface/RooDijet5ParamBinPdf.h"
+//#include "HiggsAnalysis/CombinedLimit/interface/RooAtlasBinPdf.h"
+//#include "HiggsAnalysis/CombinedLimit/interface/RooAtlas6ParamBinPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijet4ParamSilvioPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijet5ParamSilvioPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijet6ParamSilvioPdf.h"
+
+//#include "HiggsAnalysis/CombinedLimit/interface/ModExpFunction.h"
+//#include "HiggsAnalysis/CombinedLimit/interface/Dijet5ParamFunction.h"
+//#include "HiggsAnalysis/CombinedLimit/interface/AtlasFunction.h"
+//#include "HiggsAnalysis/CombinedLimit/interface/Atlas6ParamFunction.h"
+
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPol3Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPol4Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPol5Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPol6Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPol7Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPol8Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPol9Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPol10Pdf.h"
+
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPolExt5Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPolExt6Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPolExt7Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPolExt8Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPolExt9Pdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijetFisherPolExt10Pdf.h"
 
 #include "HiggsAnalysis/CombinedLimit/interface/RooPiecewisePolynomial.h"
 

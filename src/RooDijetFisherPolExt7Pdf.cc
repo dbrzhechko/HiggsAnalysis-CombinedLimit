@@ -7,7 +7,7 @@
 #include <cmath>
 #include <math.h>
 
-#include "../interface/RooDijetFisherNom7Pdf.h"
+#include "../interface/RooDijetFisherPolExt7Pdf.h"
 #include "RooRealVar.h"
 #include "RooConstVar.h"
 #include "Math/Functor.h"
@@ -19,9 +19,9 @@
 using namespace std;
 using namespace RooFit;
 
-ClassImp(RooDijetFisherNom7Pdf)
+ClassImp(RooDijetFisherPolExt7Pdf)
 //---------------------------------------------------------------------------
-RooDijetFisherNom7Pdf::RooDijetFisherNom7Pdf(const char *name, const char *title,
+RooDijetFisherPolExt7Pdf::RooDijetFisherPolExt7Pdf(const char *name, const char *title,
 				   RooAbsReal& _th1x,  
 				   RooAbsReal& _p1, 
                    RooAbsReal& _p2, 
@@ -54,7 +54,7 @@ RooDijetFisherNom7Pdf::RooDijetFisherNom7Pdf(const char *name, const char *title
   memset(&xArray, 0, sizeof(xArray));
 }
 //---------------------------------------------------------------------------
-RooDijetFisherNom7Pdf::RooDijetFisherNom7Pdf(const RooDijetFisherNom7Pdf& other, const char* name) :
+RooDijetFisherPolExt7Pdf::RooDijetFisherPolExt7Pdf(const RooDijetFisherPolExt7Pdf& other, const char* name) :
    RooAbsPdf(other, name), 
    th1x("th1x", this, other.th1x),  
    p1("p1", this, other.p1),
@@ -79,7 +79,7 @@ RooDijetFisherNom7Pdf::RooDijetFisherNom7Pdf(const RooDijetFisherNom7Pdf& other,
   }
 }
 //---------------------------------------------------------------------------
-void RooDijetFisherNom7Pdf::setTH1Binning(TH1* _Hnominal){
+void RooDijetFisherPolExt7Pdf::setTH1Binning(TH1* _Hnominal){
   xBins = _Hnominal->GetXaxis()->GetNbins();
   xMin = _Hnominal->GetXaxis()->GetBinLowEdge(1);
   xMax = _Hnominal->GetXaxis()->GetBinUpEdge(xBins);
@@ -89,15 +89,15 @@ void RooDijetFisherNom7Pdf::setTH1Binning(TH1* _Hnominal){
   }
 }
 //---------------------------------------------------------------------------
-void RooDijetFisherNom7Pdf::setRelTol(double _relTol){
+void RooDijetFisherPolExt7Pdf::setRelTol(double _relTol){
   relTol = _relTol;
 }
 //---------------------------------------------------------------------------
-void RooDijetFisherNom7Pdf::setAbsTol(double _absTol){
+void RooDijetFisherPolExt7Pdf::setAbsTol(double _absTol){
   absTol = _absTol;
 }
 //---------------------------------------------------------------------------
-Double_t RooDijetFisherNom7Pdf::evaluate() const
+Double_t RooDijetFisherPolExt7Pdf::evaluate() const
 {
   Double_t integral = 0.0;
   
@@ -113,7 +113,7 @@ Double_t RooDijetFisherNom7Pdf::evaluate() const
   Double_t xHigh = xArray[iBin+1];
     
   // define the function to be integrated numerically
-  DijetFisherNom7Function func;
+  DijetFisherPolExt7Function func;
   double params[7];
   params[0] = sqrts;    
   params[1] = p1;
@@ -141,13 +141,13 @@ Double_t RooDijetFisherNom7Pdf::evaluate() const
 }
 
 // //---------------------------------------------------------------------------
-Int_t RooDijetFisherNom7Pdf::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName) const{
+Int_t RooDijetFisherPolExt7Pdf::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName) const{
   if (matchArgs(allVars, analVars, th1x)) return 1;
   return 0;
 }
 
 // //---------------------------------------------------------------------------
-Double_t RooDijetFisherNom7Pdf::analyticalIntegral(Int_t code, const char* rangeName) const{
+Double_t RooDijetFisherPolExt7Pdf::analyticalIntegral(Int_t code, const char* rangeName) const{
 
    Double_t th1xMin = th1x.min(rangeName); Double_t th1xMax = th1x.max(rangeName);
    Int_t iBinMin = (Int_t) th1xMin; Int_t iBinMax = (Int_t) th1xMax;
@@ -159,7 +159,7 @@ Double_t RooDijetFisherNom7Pdf::analyticalIntegral(Int_t code, const char* range
 
    
    // define the function to be integrated numerically  
-   DijetFisherNom7Function func;
+   DijetFisherPolExt7Function func;
    double params[8];
    params[0] = sqrts;    
    params[1] = p1;
@@ -195,7 +195,7 @@ Double_t RooDijetFisherNom7Pdf::analyticalIntegral(Int_t code, const char* range
        }
      }
    } else {
-     cout << "WARNING IN RooDijetFisherNom7Pdf: integration code is not correct" << endl;
+     cout << "WARNING IN RooDijetFisherPolExt7Pdf: integration code is not correct" << endl;
      cout << "                           what are you integrating on?" << endl;
      return 1.0;
    }

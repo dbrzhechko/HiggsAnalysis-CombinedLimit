@@ -83,7 +83,9 @@ public:
 //     double pdf = exp(-p[2]*(x/p[0]))/pow(x/p[0],p[1])  * (1. - p[4]/TMath::Max((x-p[3]),1.));
 //     double pdf = exp(-p[2]*(x/p[0]))/pow(x/p[0],p[1])  * (1. - p[4]/(x-p[3]));
 //     double pdf = exp(-p[2]*(x/p[0]))/pow(x/p[0],p[1])  / (exp(p[4]/TMath::Max(x-p[3],1e-9))-1);
-     double pdf = exp(-p[2]*(x/p[0]) + p[4]*pow(x/p[0],2))/pow(x/p[0],p[1])  / (exp(1/TMath::Max(x-p[3],1e-9))-1);
+//     double pdf = exp(-p[2]*(x/p[0]) + p[4]*pow(x/p[0],2))/pow(x/p[0],p[1])  / (exp(1/TMath::Max(x-p[3],1e-9))-1);
+
+     double pdf = pow(x-1,p[1])/pow(x/p[0],p[2]+p[3]*log(x/p[0])+p[4]*log(x/p[0])*log(x/p[0]));
 
      double eff = 1.;
      //if (p[6]>0) eff = 0.5 * (1.0 + TMath::Erf((x - p[5])/p[6])) ; // Error function
@@ -95,7 +97,10 @@ public:
    {
 //     double pdf = pow(1-x/pars[0],pars[1])*(1+pars[4]*x/pars[0])/pow(x/pars[0],pars[2]+pars[3]*log(x/pars[0]));
 //     double pdf = exp(-pars[2]*(x/pars[0]))/pow(x/pars[0],pars[1])  * (1. - pars[4]/TMath::Max((x-pars[3]),1.));
-     double pdf = exp(-pars[2]*(x/pars[0])  + pars[4]*pow(x/pars[0],2) )/pow(x/pars[0],pars[1])  / (exp(1/TMath::Max(x-pars[3],1e-9))-1);
+//     double pdf = exp(-pars[2]*(x/pars[0])  + pars[4]*pow(x/pars[0],2) )/pow(x/pars[0],pars[1])  / (exp(1/TMath::Max(x-pars[3],1e-9))-1);
+
+     double pdf = pow(x-1,pars[1])/pow(x/pars[0],pars[2]+pars[3]*log(x/pars[0])+pars[4]*log(x/pars[0])*log(x/pars[0]));
+
      double eff = 1.;
      //if (pars[6]>0) eff = 0.5 * (1.0 + TMath::Erf((x - pars[5])/pars[6])); // Error function     
      if (pars[6]>0) eff = 1.0/(1.0 + exp(-2.4*(x - pars[5])/pars[6])); // Sigmoid function

@@ -103,13 +103,36 @@
         <class name="RooDijetFisherAlt6Pdf" />
         <class name="RooDijetFisherAlt7Pdf" />
 
-        <class name="RooModExpBinPdf" />
-        <class name="RooDijet5ParamBinPdf" />
-        <class name="RooAtlas6ParamBinPdf" />
-        <class name="RooAtlasBinPdf" />
+        <class name="RooDijetFisherPol3Pdf" />
+        <class name="RooDijetFisherPol4Pdf" />
+        <class name="RooDijetFisherPol5Pdf" />
+        <class name="RooDijetFisherPol6Pdf" />
+        <class name="RooDijetFisherPol7Pdf" />
+        <class name="RooDijetFisherPol8Pdf" />
+        <class name="RooDijetFisherPol9Pdf" />
+        <class name="RooDijetFisherPol10Pdf" />
+
+        <class name="RooDijetFisherPolExt5Pdf" />
+        <class name="RooDijetFisherPolExt6Pdf" />
+        <class name="RooDijetFisherPolExt7Pdf" />
+        <class name="RooDijetFisherPolExt8Pdf" />
+        <class name="RooDijetFisherPolExt9Pdf" />
+        <class name="RooDijetFisherPolExt10Pdf" />
+
+
+
+<!--        <class name="RooModExpBinPdf" />-->
+<!--        <class name="RooDijet5ParamBinPdf" />-->
+<!--        <class name="RooAtlas6ParamBinPdf" />-->
+<!--        <class name="RooAtlasBinPdf" />-->
         <class name="RooDijet4ParamSilvioPdf" />
         <class name="RooDijet5ParamSilvioPdf" />
         <class name="RooDijet6ParamSilvioPdf" />
+
+<!--        <class name="ModExpFunction" />-->
+<!--        <class name="Dijet5ParamFunction" />-->
+<!--        <class name="AtlasFunction" />-->
+<!--        <class name="Atlas6ParamFunction" />-->
 
 	<class name="ProcessNormalization" />
 	<class name="Roo2ExpPdf" />
